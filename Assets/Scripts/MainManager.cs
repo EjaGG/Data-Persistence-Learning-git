@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.IO;
 
 public class MainManager : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text HighScoreText;
     public GameObject GameOverText;
     
     private bool m_Started = false;
@@ -18,10 +20,32 @@ public class MainManager : MonoBehaviour
     
     private bool m_GameOver = false;
 
-    
+    public static MainManager Instance;
+    public int Highscore;
+
+    private void Awake()
+    {
+
+
+    }
+
     // Start is called before the first frame update
     void Start()
     {
+        // start of new code
+        if (Instance != null)
+        {
+            Debug.Log("thing is destroyed");
+            Destroy(gameObject);
+            return;
+
+        }
+        // end of new code
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+        Debug.Log("thing is not destroyed");
+
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
         
@@ -36,7 +60,11 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+
+        HighScoreText.text = $"Highscore : {Highscore}";
     }
+
+
 
     private void Update()
     {
@@ -66,7 +94,35 @@ public class MainManager : MonoBehaviour
     {
         m_Points += point;
         ScoreText.text = $"Score : {m_Points}";
+        SetHighscore();
     }
+
+    public void SetHighscore()
+    {
+        if (m_Points > Highscore)
+        {
+            Highscore = m_Points;
+            HighScoreText.text = $"Highscore : {Highscore}";
+        }
+    }
+
+    public void SaveHighscore()
+    {
+        SaveData data = new SaveData();
+        data.Highscore = Highscore;
+
+        string json = JsonUtility.ToJson(data);
+
+        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
+    }
+
+    [System.Serializable]
+    class SaveData
+    {
+        public int Highscore;
+
+    }
+
 
     public void GameOver()
     {
